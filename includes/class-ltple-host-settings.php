@@ -96,28 +96,10 @@ class LTPLE_Host_Settings {
 		add_submenu_page(
 		
 			$this->plugin->slug,
-			__( 'Plan Events', $this->plugin->slug ),
-			__( 'Plan Events', $this->plugin->slug ),
+			__( 'Domains', $this->plugin->slug ),
+			__( 'Domains', $this->plugin->slug ),
 			'edit_pages',
-			'edit.php?post_type=plan-event'
-		);	
-	
-		add_submenu_page(
-		
-			$this->plugin->slug,
-			__( 'Stripe Events', $this->plugin->slug ),
-			__( 'Stripe Events', $this->plugin->slug ),
-			'edit_pages',
-			'edit.php?post_type=stripe-event'
-		);
-		
-		add_submenu_page(
-		
-			$this->plugin->slug,
-			__( 'Paypal Events', $this->plugin->slug ),
-			__( 'Paypal Events', $this->plugin->slug ),
-			'edit_pages',
-			'edit.php?post_type=paypal-event'
+			'edit.php?post_type=domain'
 		);
 	}
 
@@ -162,30 +144,6 @@ class LTPLE_Host_Settings {
 			'description'			=> '',
 			'fields'				=> array(
 				
-				array(
-					'id' 			=> 'client_url',
-					'label'			=> __( 'Client url' , $this->plugin->slug ),
-					'description'	=> '',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( 'http://', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'client_id',
-					'label'			=> __( 'Client ID' , $this->plugin->slug ),
-					'description'	=> '',
-					'type'			=> 'number',
-					'default'		=> '0',
-					'placeholder'	=> __( '0', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'client_key',
-					'label'			=> __( 'Client key' , 'live-template-editor-client' ),
-					'description'	=> '',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( '', 'live-template-editor-client' )
-				),
 				array(
 					'id' 			=> 'email_support',
 					'label'			=> __( 'Support email' , $this->plugin->slug ),
@@ -254,182 +212,6 @@ class LTPLE_Host_Settings {
 				*/
 			)
 		);
-		
-		$settings['checkout'] = array(
-			'title'					=> __( 'Checkout settings', $this->plugin->slug ),
-			'description'			=> '',
-			'fields'				=> array(
-				
-				array(
-					'id' 			=> 'stripe_test_secret_key',
-					'label'			=> __( 'Stripe Test secret key' , $this->plugin->slug ),
-					'description'	=> 'Stripe test secret key',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( 'sk_test_', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'stripe_test_publishable_key',
-					'label'			=> __( 'Stripe Test publishable key' , $this->plugin->slug ),
-					'description'	=> 'Stripe test publishable key',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( 'pk_test_', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'stripe_live_secret_key',
-					'label'			=> __( 'Stripe Live secret key' , $this->plugin->slug ),
-					'description'	=> 'Stripe live secret key',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( 'sk_live_', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'stripe_live_publishable_key',
-					'label'			=> __( 'Stripe Live publishable key' , $this->plugin->slug ),
-					'description'	=> 'Stripe live publishable key',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( 'pk_live_', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'stripe_mode',
-					'label'			=> __( 'Stripe mode - User', $this->plugin->slug ),
-					'description'	=> '',
-					'type'			=> 'radio',
-					'options'		=> array( 'test' => 'Test', 'live' => 'Live'),
-					'default'		=> 'test'
-				),
-				array(
-					'id' 			=> 'stripe_mode_admin',
-					'label'			=> __( 'Stripe mode - Admin', $this->plugin->slug ),
-					'description'	=> '',
-					'type'			=> 'radio',
-					'options'		=> array( 'test' => 'Test', 'live' => 'Live'),
-					'default'		=> 'test'
-				),
-				array(
-					'id' 			=> 'stripe_checkout_img',
-					'label'			=> __( 'Stripe Checkout image url' , $this->plugin->slug ),
-					'description'	=> '',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( 'http://', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'ppl_test_api_user',
-					'label'			=> __( 'Paypal Test API user' , $this->plugin->slug ),
-					'description'	=> 'Paypal Test API user',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( 'service_api1.example.com', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'ppl_test_api_pwd',
-					'label'			=> __( 'Paypal Test API password' , $this->plugin->slug ),
-					'description'	=> 'Paypal Test API password',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( 'mypassword', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'ppl_test_api_sign',
-					'label'			=> __( 'Paypal Test API signature' , $this->plugin->slug ),
-					'description'	=> 'Paypal Test API signature',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( 'AMEtk-H0fl3-XL8...', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'ppl_live_api_user',
-					'label'			=> __( 'Paypal Live API user' , $this->plugin->slug ),
-					'description'	=> 'Paypal Live API user',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( 'service_api1.example.com', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'ppl_live_api_pwd',
-					'label'			=> __( 'Paypal Live API password' , $this->plugin->slug ),
-					'description'	=> 'Paypal Live API password',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( 'mypassword', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'ppl_live_api_sign',
-					'label'			=> __( 'Paypal Live API signature' , $this->plugin->slug ),
-					'description'	=> 'Paypal Live API signature',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( 'AMEtk-H0fl3-XL8...', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'ppl_mode',
-					'label'			=> __( 'Paypal mode - User', $this->plugin->slug ),
-					'description'	=> '',
-					'type'			=> 'radio',
-					'options'		=> array( 'test' => 'Test', 'live' => 'Live'),
-					'default'		=> 'live'
-				),
-				array(
-					'id' 			=> 'ppl_mode_admin',
-					'label'			=> __( 'Paypal mode - Admin', $this->plugin->slug ),
-					'description'	=> '',
-					'type'			=> 'radio',
-					'options'		=> array( 'test' => 'Test', 'live' => 'Live'),
-					'default'		=> 'live'
-				),
-				array(
-					'id' 			=> 'ppl_checkout_img',
-					'label'			=> __( 'Paypal Checkout image url' , $this->plugin->slug ),
-					'description'	=> '',
-					'type'			=> 'text',
-					'default'		=> '',
-					'placeholder'	=> __( 'http://', $this->plugin->slug )
-				)
-			)
-		);
-
-		/*
-		$settings['extra'] = array(
-			'title'					=> __( 'Extra', $this->plugin->slug ),
-			'description'			=> __( 'These are some extra input fields that maybe aren\'t as common as the others.', $this->plugin->slug ),
-			'fields'				=> array(
-				array(
-					'id' 			=> 'number_field',
-					'label'			=> __( 'A Number' , $this->plugin->slug ),
-					'description'	=> __( 'This is a standard number field - if this field contains anything other than numbers then the form will not be submitted.', $this->plugin->slug ),
-					'type'			=> 'number',
-					'default'		=> '',
-					'placeholder'	=> __( '42', $this->plugin->slug )
-				),
-				array(
-					'id' 			=> 'colour_picker',
-					'label'			=> __( 'Pick a colour', $this->plugin->slug ),
-					'description'	=> __( 'This uses WordPress\' built-in colour picker - the option is stored as the colour\'s hex code.', $this->plugin->slug ),
-					'type'			=> 'color',
-					'default'		=> '#21759B'
-				),
-				array(
-					'id' 			=> 'an_image',
-					'label'			=> __( 'An Image' , $this->plugin->slug ),
-					'description'	=> __( 'This will upload an image to your media library and store the attachment ID in the option field. Once you have uploaded an imge the thumbnail will display above these buttons.', $this->plugin->slug ),
-					'type'			=> 'image',
-					'default'		=> '',
-					'placeholder'	=> ''
-				),
-				array(
-					'id' 			=> 'multi_select_box',
-					'label'			=> __( 'A Multi-Select Box', $this->plugin->slug ),
-					'description'	=> __( 'A standard multi-select box - the saved data is stored as an array.', $this->plugin->slug ),
-					'type'			=> 'select_multi',
-					'options'		=> array( 'linux' => 'Linux', 'mac' => 'Mac', 'windows' => 'Windows' ),
-					'default'		=> array( 'linux' )
-				)
-			)
-		);
-		*/
 		
 		$settings = apply_filters( $this->parent->_token . '_settings_fields', $settings );
 
