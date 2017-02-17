@@ -40,8 +40,6 @@ class LTPLE_Host_Settings {
 		
 		$this->parent = $parent;
 
-		$this->base = 'ltple_';
-		
 		$this->plugin 		 	= new stdClass();
 		$this->plugin->slug  	= 'live-template-editor-host';
 		$this->plugin->title 	= 'Live Template Editor Host';
@@ -50,8 +48,8 @@ class LTPLE_Host_Settings {
 		// get options
 		
 		$this->options 				 = new stdClass();
-		$this->options->emailSupport = get_option( $this->base . 'email_support');		
-		
+		$this->options->emailSupport = get_option( $this->parent->_base . 'email_support');		
+
 		// Initialise settings
 		add_action( 'init', array( $this, 'init_settings' ), 11 );
 
@@ -268,12 +266,12 @@ class LTPLE_Host_Settings {
 					}
 
 					// Register field
-					$option_name = $this->base . $field['id'];
+					$option_name = $this->parent->_base . $field['id'];
 					register_setting( $this->parent->_token . '_settings', $option_name, $validation );
 
 					// Add field to page
 										
-					add_settings_field( $field['id'], $field['label'], array( $this->parent->admin, 'display_field' ), $this->parent->_token . '_settings', $section, array( 'field' => $field, 'prefix' => $this->base ) );
+					add_settings_field( $field['id'], $field['label'], array( $this->parent->admin, 'display_field' ), $this->parent->_token . '_settings', $section, array( 'field' => $field, 'prefix' => $this->parent->_base ) );
 				}
 
 				if ( ! $current_section ) break;
