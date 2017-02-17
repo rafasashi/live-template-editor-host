@@ -3,12 +3,19 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class LTPLE_Host_Admin_API {
-
+	
+	var $parent;
+	
 	/**
 	 * Constructor function
 	 */
-	public function __construct () {
+	public function __construct ( $parent ) {
+		
+		$this->parent 	= $parent;
+		
 		add_action( 'save_post', array( $this, 'save_meta_boxes' ), 10, 1 );
+		
+		do_action( 'updated_option', array( $this, 'settings_updated' ), 10, 3 );
 	}
 
 	/**
@@ -17,20 +24,22 @@ class LTPLE_Host_Admin_API {
 	 * @param  boolean $echo  Whether to echo the field HTML or return it
 	 * @return void
 	 */
-	public function display_field ( $data = array(), $post = false, $echo = true ) {
+	public function display_field ( $data = array(), $item = false, $echo = true ) {
 
 		// Get field info
 		if ( isset( $data['field'] ) ) {
 			
 			$field = $data['field'];
-		} 
-		else {
+			
+		} else {
 			
 			$field = $data;
 		}
 
 		// Check for prefix on option name
+		
 		$option_name = '';
+		
 		if ( isset( $data['prefix'] ) ) {
 			
 			$option_name = $data['prefix'];
@@ -38,45 +47,114 @@ class LTPLE_Host_Admin_API {
 
 		// Get saved data
 		$data = '';
-		if ( $post ) {
+		
+		if ( !empty( $item->caps ) ) {
+			
+			// Get saved field data
+			
+			$option_name .= $field['id'];
+			
+			if( isset($item->{$field['id']}) ){
+				
+				$option = $item->{$field['id']};
+			}
+			else{
+				
+				$option = get_user_meta( $item->ID, $field['id'], true );
+			}
+
+			// Get data to display in field
+			if ( isset( $option ) ) {
+				
+				$data = $option;
+			}
+
+		} 
+		elseif ( !empty($item->ID) ) {
 
 			// Get saved field data
 			$option_name .= $field['id'];
-			$option = get_post_meta( $post->ID, $field['id'], true );
+			$option = get_post_meta( $item->ID, $field['id'], true );
 
 			// Get data to display in field
 			if ( isset( $option ) ) {
 				$data = $option;
 			}
 
-		} else {
+		} 
+		else{
 
 			// Get saved option
+			
 			$option_name .= $field['id'];
 			$option = get_option( $option_name );
 
 			// Get data to display in field
+			
 			if ( isset( $option ) ) {
+				
 				$data = $option;
 			}
-
+		}
+		
+		// get field id
+		
+		$id = esc_attr( str_replace(array('[',']'),array('_',''),$field['id']) );
+		
+		// get field style
+		
+		$style = '';
+		
+		if( !empty($field['style']) ){
+			
+			$style = ' style="'.$field['style'].'"';
 		}
 
 		// Show default data if no option saved and default is supplied
-		if ( $data === false && isset( $field['default'] ) ) {
+
+		if ( empty($data) && isset( $field['default'] ) ) {
+			
 			$data = $field['default'];
-		} elseif ( $data === false ) {
+			
+		} 
+		elseif ( $data === false ) {
+			
 			$data = '';
 		}
+		
+		$disabled = ( ( isset($field['disabled']) && $field['disabled'] === true ) ? ' disabled="disabled"' : '' );
 
+		$required = ( ( isset($field['required']) && $field['required'] === true ) ? ' required="true"' : '' );
+		
 		$html = '';
+		
+		if( !empty($disabled) ){
+			
+			$html .= '<input class="form-control" id="' . $id . '" type="hidden" name="' . esc_attr( $option_name ) . '" value="' . esc_attr( $data ) . '"'.$required.'/>' . "\n";
+		}
 
 		switch( $field['type'] ) {
 
 			case 'text':
 			case 'url':
 			case 'email':
-				$html .= '<input id="' . esc_attr( $field['id'] ) . '" type="text" name="' . esc_attr( $option_name ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" value="' . esc_attr( $data ) . '" />' . "\n";
+				$html .= '<input' . $style . ' class="form-control" id="' . $id . '" type="text" name="' . esc_attr( $option_name ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" value="' . esc_attr( $data ) . '" '.$required.$disabled.'/>' . "\n";
+			break;
+			
+			case 'slug':
+				$html .= '<span style="background: #e5e5e5;padding: 3px 7px;color: #666;border: 1px solid #ddd;">'.home_url() . '/</span><input class="form-control" id="' . $id . '" type="text" name="' . esc_attr( $option_name ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" value="' . esc_attr( $data ) . '" '.$required.$disabled.'/><span style="background: #e5e5e5;padding: 3px 7px;color: #666;border: 1px solid #ddd;">/</span>' . "\n";
+			break;
+			
+			case 'margin':
+				
+				$value = esc_attr( $data );
+				
+				if($value == ''){
+					
+					$value = esc_attr( $field['default'] );
+				}
+				
+				$html .= '<input class="form-control" id="' . $id . '" type="text" name="' . esc_attr( $option_name ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" value="' . $value . '" '.$required.$disabled.'/>' . "\n";
 			break;
 
 			case 'password':
@@ -91,24 +169,15 @@ class LTPLE_Host_Admin_API {
 				if ( isset( $field['max'] ) ) {
 					$max = ' max="' . esc_attr( $field['max'] ) . '"';
 				}
-				$html .= '<input id="' . esc_attr( $field['id'] ) . '" type="' . esc_attr( $field['type'] ) . '" name="' . esc_attr( $option_name ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" value="' . esc_attr( $data ) . '"' . $min . '' . $max . '/>' . "\n";
+				$html .= '<input class="form-control" id="' . $id . '" type="' . esc_attr( $field['type'] ) . '" name="' . esc_attr( $option_name ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" value="' . esc_attr( $data ) . '"' . $min . '' . $max . ''.$required.$disabled.'/>' . "\n";
+			break;
+			
+			case 'text_secret':
+				$html .= '<input class="form-control" id="' . $id . '" type="text" name="' . esc_attr( $option_name ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" value="" '.$required.$disabled.'/>' . "\n";
 			break;
 
-			case 'text_secret':
-				$html .= '<input id="' . esc_attr( $field['id'] ) . '" type="text" name="' . esc_attr( $option_name ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" value="" />' . "\n";
-			break;
-			
 			case 'textarea':
-				$html .= '<textarea id="' . esc_attr( $field['id'] ) . '" rows="5" cols="50" name="' . esc_attr( $option_name ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '">' . $data . '</textarea><br/>'. "\n";
-			break;
-			
-			case 'json':
-			
-				$html .=  '<pre>'. "\n";
-					//$html .=  $data. "\n";
-					$html .= '<textarea id="' . esc_attr( $field['id'] ) . '" style="width:100%;min-height:700px;" name="' . esc_attr( $option_name ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '">' . $data . '</textarea><br/>'. "\n";
-				$html .=  '</pre>'. "\n";
-				
+				$html .= '<textarea'.$style.' class="form-control" id="' . $id . '" style="width:100%;height:300px;" name="' . esc_attr( $option_name ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '"'.$required.$disabled.'>' . $data . '</textarea><br/>'. "\n";
 			break;
 
 			case 'checkbox':
@@ -116,20 +185,306 @@ class LTPLE_Host_Admin_API {
 				if ( $data && 'on' == $data ) {
 					$checked = 'checked="checked"';
 				}
-				$html .= '<input id="' . esc_attr( $field['id'] ) . '" type="' . esc_attr( $field['type'] ) . '" name="' . esc_attr( $option_name ) . '" ' . $checked . '/>' . "\n";
+				$html .= '<input'.$style.' class="form-control" id="' . $id . '" type="' . esc_attr( $field['type'] ) . '" name="' . esc_attr( $option_name ) . '" ' . $checked . ''.$required.$disabled.'/>' . "\n";
 			break;
 
 			case 'checkbox_multi':
+			
 				foreach ( $field['options'] as $k => $v ) {
+					
 					$checked = false;
 					if ( in_array( $k, (array) $data ) ) {
 						$checked = true;
 					}
-					$html .= '<label for="' . esc_attr( $field['id'] . '_' . $k ) . '" class="checkbox_multi"><input type="checkbox" ' . checked( $checked, true, false ) . ' name="' . esc_attr( $option_name ) . '[]" value="' . esc_attr( $k ) . '" id="' . esc_attr( $field['id'] . '_' . $k ) . '" /> ' . $v . '</label> ';
+					
+					$html .= '<label for="' . esc_attr( $field['id'] . '_' . $k ) . '" class="checkbox_multi"><input class="form-control" type="checkbox" ' . checked( $checked, true, false ) . ' name="' . esc_attr( $option_name ) . '[]" value="' . esc_attr( $k ) . '" id="' . esc_attr( $field['id'] . '_' . $k ) . '" '.$required.$disabled.'/> ' . $v . '</label> ';
+					$html .= '<br>';
 				}
 			break;
+			
+			case 'key_value':
 
+				if( !isset($data['key']) || !isset($data['value']) ){
+
+					$data = ['key' => [ 0 => '' ], 'value' => [ 0 => '' ]];
+				}
+
+				$inputs = ['string','text','number','password'];
+				
+				$html .= '<div id="'.$field['id'].'" class="sortable">';
+					
+					$html .= ' <a href="#" class="add-input-group" style="line-height:40px;">Add field</a>';
+				
+					$html .= '<ul class="input-group ui-sortable">';
+						
+						foreach( $data['key'] as $e => $key) {
+
+							if($e > 0){
+								
+								$class='input-group-row ui-state-default ui-sortable-handle';
+							}
+							else{
+								
+								$class='input-group-row ui-state-default ui-state-disabled';
+							}
+						
+							$value = str_replace('\\\'','\'',$data['value'][$e]);
+									
+							$html .= '<li class="'.$class.'" style="display:inline-block;width:100%;">';
+						
+								$html .= '<select name="'.$field['name'].'[input][]" style="float:left;">';
+
+								foreach ( $inputs as $input ) {
+									
+									$selected = false;
+									if ( isset($data['input'][$e]) && $data['input'][$e] == $input ) {
+										
+										$selected = true;
+									}
+									
+									$html .= '<option ' . selected( $selected, true, false ) . ' value="' . esc_attr( $input ) . '">' . $input . '</option>';
+								}
+								
+								$html .= '</select> ';
+						
+								$html .= '<input type="text" placeholder="key" name="'.$field['name'].'[key][]" style="width:30%;float:left;" value="'.$data['key'][$e].'">';
+								
+								$html .= '<span style="float:left;"> => </span>';
+								
+								if(isset($data['input'][$e])){
+									
+									if($data['input'][$e] == 'number'){
+										
+										$html .= '<input type="number" placeholder="number" name="'.$field['name'].'[value][]" style="width:30%;float:left;" value="'.$value.'">';
+									}
+									elseif($data['input'][$e] == 'password'){
+										
+										$html .= '<input type="password" placeholder="password" name="'.$field['name'].'[value][]" style="width:30%;float:left;" value="'.$value.'">';
+									}
+									elseif($data['input'][$e] == 'text'){
+										
+										$html .= '<textarea placeholder="text" name="'.$field['name'].'[value][]" style="width:30%;float:left;height:200px;">' . $value . '</textarea>';
+									}										
+									else{
+										
+										$html .= '<input type="text" placeholder="value" name="'.$field['name'].'[value][]" style="width:30%;float:left;" value="'.$value.'">';
+									}
+								}
+								else{
+									
+									$html .= '<input type="text" placeholder="value" name="'.$field['name'].'[value][]" style="width:30%;float:left;" value="'.$value.'">';
+								}
+
+								if( $e > 0 ){
+									
+									$html .= '<a class="remove-input-group" href="#">[ x ]</a> ';
+								}
+
+							$html .= '</li>';						
+						}
+					
+					$html .= '</ul>';					
+					
+				$html .= '</div>';
+
+			break;
+
+			case 'form':
+
+				if( !isset($data['name']) || !isset($data['value']) ){
+
+					$data = array(
+					
+						'name' 		=> [ 0 => '' ],
+						'required' 	=> [ 0 => '' ],
+						'value' 	=> [ 0 => '' ],
+					);
+				}
+
+				$inputs 	= ['title','label','text','textarea','number','password','domain','submit'];
+				$required 	= ['required','optional'];
+				$id 		= ( !empty($field['id']) ? $field['id'] : 'form' );
+				
+				$html .= '<div id="'.$id.'" class="sortable">';
+					
+					if( !isset($field['action']) ){
+					
+						$html .= ' <a href="#" class="add-input-group" style="line-height:40px;">Add field</a>';
+					
+						$html .= '<ul class="input-group ui-sortable">';
+							
+							foreach( $data['name'] as $e => $name) {
+								
+								if($e > 0){
+									
+									$class='input-group-row ui-state-default ui-sortable-handle';
+								}
+								else{
+									
+									$class='input-group-row ui-state-default ui-state-disabled';
+								}								
+								
+								$req_val 	= ( isset($data['required'][$e]) ? str_replace('\\\'','\'',$data['required'][$e]): 'optional');
+								$value 		= ( isset($data['value'][$e]) 	 ? str_replace('\\\'','\'',$data['value'][$e]) 	 : '');
+										
+								$html .= '<li class="'.$class.'" style="display:inline-block;width:100%;">';
+							
+									// inputs
+							
+									$html .= '<select name="'.$field['name'].'[input][]" style="float:left;">';
+
+										foreach ( $inputs as $input ) {
+											
+											$selected = false;
+											if ( isset($data['input'][$e]) && $data['input'][$e] == $input ) {
+												
+												$selected = true;
+											}
+											
+											$html .= '<option ' . selected( $selected, true, false ) . ' value="' . esc_attr( $input ) . '">' . $input . '</option>';
+										}
+									
+									$html .= '</select> ';
+									
+									// required
+							
+									if ( isset($data['input'][$e]) && in_array($data['input'][$e],['title','label','submit']) ) {
+
+										$disabled = ' disabled="disabled"';
+									}
+									else{
+										
+										$disabled = '';
+									}
+									
+									$html .= '<select name="'.$field['name'].'[required][]" style="float:left;"'.$disabled.'>';
+
+										foreach ( $required as $r ) {
+											
+											$selected = false;
+											if ( empty($disabled) && isset($data['required'][$e]) && $data['required'][$e] == $r ) {
+												
+												$selected = true;
+											}
+											
+											$html .= '<option ' . selected( $selected, true, false ) . ' value="' . esc_attr( $r ) . '">' . $r . '</option>';
+										}
+									
+									$html .= '</select> ';
+							
+									if( isset($data['input'][$e]) && $data['input'][$e] == 'domain'){
+										
+										$html .= '<input type="text" style="width:30%;float:left;" value="domain_name" disabled="true">';
+										$html .= '<input type="hidden" name="'.$field['name'].'[name][]" value="domain_name">'; 
+									}	
+									else{
+										
+										$html .= '<input type="text" placeholder="name" name="'.$field['name'].'[name][]" style="width:30%;float:left;" value="'.$data['name'][$e].'">';
+									}
+									
+									$html .= '<span style="float:left;"> => </span>';
+									
+									if(isset($data['input'][$e])){
+										
+										if($data['input'][$e] == 'number'){
+											
+											$html .= '<input type="number" placeholder="number" name="'.$field['name'].'[value][]" style="width:30%;float:left;" value="'.$value.'">';
+										}
+										elseif($data['input'][$e] == 'password'){
+											
+											$html .= '<input type="password" placeholder="password" name="'.$field['name'].'[value][]" style="width:30%;float:left;" value="'.$value.'">';
+										}
+										elseif($data['input'][$e] == 'textarea'){
+											
+											$html .= '<textarea placeholder="text" name="'.$field['name'].'[value][]" style="width:30%;float:left;height:200px;">' . $value . '</textarea>';
+										}									
+										else{
+											
+											$html .= '<input type="text" placeholder="value" name="'.$field['name'].'[value][]" style="width:30%;float:left;" value="'.$value.'">';
+										}
+									}
+									else{
+										
+										$html .= '<input type="text" placeholder="value" name="'.$field['name'].'[value][]" style="width:30%;float:left;" value="'.$value.'">';
+									}
+
+									if( $e > 0 ){
+										
+										$html .= '<a class="remove-input-group" href="#">[ x ]</a> ';
+									}
+
+								$html .= '</li>';						
+							}
+							
+						$html .= '</ul>';
+					
+					}
+					else{
+						
+						$method = ( ( isset($field['method']) && $field['method'] == 'post' ) ? 'post' : 'get' );
+						
+						$html .= '<form action="'.$field['action'].'" method="'.$method.'">';
+
+						foreach( $data['name'] as $e => $name) {
+							
+							if(isset($data['input'][$e])){
+								
+								$required = ( ( empty($data['required'][$e]) || $data['required'][$e] == 'required' ) ? true : false );
+								
+								if($data['input'][$e] == 'title'){
+									
+									$html .= '<h4 id="'.ucfirst($name).'">'.ucfirst(ucfirst($data['value'][$e])).'</h4>';
+								}
+								elseif($data['input'][$e] == 'label'){
+									
+									$html .= '<label id="'.ucfirst($name).'">'.ucfirst(ucfirst($data['value'][$e])).'</label>';
+								}
+								elseif($data['input'][$e] == 'submit'){
+									
+									$html .= '<div class="form-group">';
+									
+										$html .= '<button type="'.$data['input'][$e].'" id="'.ucfirst($data['name'][$e]).'" class="control-input pull-right btn btn-primary">'.ucfirst(ucfirst($data['value'][$e])).'</button>';
+									
+									$html .= '</div>';
+								}
+								elseif( $data['input'][$e] == 'domain' ){
+
+									$html .= $this->display_field( array(
+							
+										'type'				=> $data['input'][$e],
+										'id'				=> $field['id'],
+										'value' 			=> $data['value'][$e],
+										'required' 			=> $required,
+										'placeholder' 		=> '',
+										'description'		=> ''
+										
+									), false, false ); 									
+								}	
+								else{
+									
+									$html .= $this->display_field( array(
+							
+										'type'				=> $data['input'][$e],
+										'id'				=> $id.'['.$name.']',
+										'value' 			=> $data['value'][$e],
+										'required' 			=> $required,
+										'placeholder' 		=> '',
+										'description'		=> ''
+										
+									), false, false ); 
+								}
+							}							
+						}
+						
+						$html .= '</form>';
+					}
+					
+				$html .= '</div>';
+
+			break;			
+			
 			case 'radio':
+			
 				foreach ( $field['options'] as $k => $v ) {
 					$checked = false;
 					if ( $k == $data ) {
@@ -137,22 +492,39 @@ class LTPLE_Host_Admin_API {
 					}
 					$html .= '<label for="' . esc_attr( $field['id'] . '_' . $k ) . '"><input type="radio" ' . checked( $checked, true, false ) . ' name="' . esc_attr( $option_name ) . '" value="' . esc_attr( $k ) . '" id="' . esc_attr( $field['id'] . '_' . $k ) . '" /> ' . $v . '</label> ';
 				}
+				
 			break;
 
 			case 'select':
-				$html .= '<select name="' . esc_attr( $option_name ) . '" id="' . esc_attr( $field['id'] ) . '">';
+
+				if(isset($field['name'])){
+					
+					$html .= '<select class="form-control" name="' . $field['name'] . '" id="' . $id . '"'.$required.$disabled.'>';
+				}
+				else{
+					
+					$html .= '<select class="form-control" name="' . esc_attr( $option_name ) . '" id="' . $id . '"'.$required.$disabled.'>';
+				}
+
 				foreach ( $field['options'] as $k => $v ) {
 					$selected = false;
 					if ( $k == $data ) {
+						
+						$selected = true;
+					}
+					elseif(isset($field['selected']) && $field['selected'] == $k ){
+						
 						$selected = true;
 					}
 					$html .= '<option ' . selected( $selected, true, false ) . ' value="' . esc_attr( $k ) . '">' . $v . '</option>';
 				}
 				$html .= '</select> ';
+				
+				
 			break;
 
 			case 'select_multi':
-				$html .= '<select name="' . esc_attr( $option_name ) . '[]" id="' . esc_attr( $field['id'] ) . '" multiple="multiple">';
+				$html .= '<select name="' . esc_attr( $option_name ) . '[]" id="' . $id . '" multiple="multiple">';
 				foreach ( $field['options'] as $k => $v ) {
 					$selected = false;
 					if ( in_array( $k, (array) $data ) ) {
@@ -162,6 +534,23 @@ class LTPLE_Host_Admin_API {
 				}
 				$html .= '</select> ';
 			break;
+			
+			case 'dropdown_categories':
+
+				$html .=wp_dropdown_categories(array(
+				
+					'show_option_none' => 'None',
+					'taxonomy'     => $field['taxonomy'],
+					'name'    	   => $field['name'],
+					'show_count'   => false,
+					'hierarchical' => true,
+					'selected'     => $field['selected'],
+					'echo'		   => false,
+					'hide_empty'   => false
+				));			
+			
+			break;
+
 			case 'image':
 				$image_thumb = '';
 				if ( $data ) {
@@ -183,6 +572,8 @@ class LTPLE_Host_Admin_API {
 
 		}
 
+		//output description
+		
 		switch( $field['type'] ) {
 
 			case 'checkbox_multi':
@@ -192,13 +583,13 @@ class LTPLE_Host_Admin_API {
 			break;
 
 			default:
-				if ( ! $post ) {
-					$html .= '<label for="' . esc_attr( $field['id'] ) . '">' . "\n";
+				if ( ! $item ) {
+					$html .= '<label for="' . $id . '">' . "\n";
 				}
 
-				$html .= '<span class="description">' . $field['description'] . '</span>' . "\n";
+				$html .= '<div><i style="color:#aaa;">' . $field['description'] . '</i></div>' . "\n";
 
-				if ( ! $post ) {
+				if ( ! $item ) {
 					$html .= '</label>' . "\n";
 				}
 			break;
@@ -221,8 +612,8 @@ class LTPLE_Host_Admin_API {
 	public function validate_field ( $data = '', $type = 'text' ) {
 
 		switch( $type ) {
-			case 'text': $data = esc_attr( $data ); break;
-			case 'url': $data = esc_url( $data ); break;
+			case 'text'	: $data = esc_attr( $data ); break;
+			case 'url'	: $data = esc_url( $data ); break;
 			case 'email': $data = is_email( $data ); break;
 		}
 
@@ -243,11 +634,13 @@ class LTPLE_Host_Admin_API {
 
 		// Get post type(s)
 		if ( ! is_array( $post_types ) ) {
+			
 			$post_types = array( $post_types );
 		}
 
 		// Generate each metabox
 		foreach ( $post_types as $post_type ) {
+			
 			add_meta_box( $id, $title, array( $this, 'meta_box_content' ), $post_type, $context, $priority, $callback_args );
 		}
 	}
@@ -271,13 +664,14 @@ class LTPLE_Host_Admin_API {
 			if ( ! isset( $field['metabox'] ) ) continue;
 
 			if ( ! is_array( $field['metabox'] ) ) {
+				
 				$field['metabox'] = array( $field['metabox'] );
 			}
 
 			if ( in_array( $args['id'], $field['metabox'] ) ) {
+
 				$this->display_meta_box_field( $field, $post );
 			}
-
 		}
 
 		echo '</div>' . "\n";
@@ -294,9 +688,15 @@ class LTPLE_Host_Admin_API {
 
 		if ( ! is_array( $field ) || 0 == count( $field ) ) return;
 
-		$field = '<p class="form-field"><label for="' . $field['id'] . '">' . $field['label'] . '</label>' . $this->display_field( $field, $post, false ) . '</p>' . "\n";
+		$meta_box  = '<p class="form-field form-group">' . PHP_EOL;
+		
+			$meta_box .= '<label for="' . $field['id'] . '">' . $field['label'] . '</label> ' . PHP_EOL;
+			
+			$meta_box .= $this->display_field( $field, $post, false ) . PHP_EOL;
+			
+		$meta_box .= '</p>' . PHP_EOL;
 
-		echo $field;
+		echo $meta_box;
 	}
 
 	/**
@@ -315,12 +715,15 @@ class LTPLE_Host_Admin_API {
 		if ( ! is_array( $fields ) || 0 == count( $fields ) ) return;
 
 		foreach ( $fields as $field ) {
+			
 			if ( isset( $_REQUEST[ $field['id'] ] ) ) {
+				
 				update_post_meta( $post_id, $field['id'], $this->validate_field( $_REQUEST[ $field['id'] ], $field['type'] ) );
-			} else {
+			} 
+			else {
+				
 				update_post_meta( $post_id, $field['id'], '' );
 			}
 		}
 	}
-
 }

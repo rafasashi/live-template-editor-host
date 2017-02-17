@@ -80,7 +80,7 @@ class LTPLE_Host {
 	 */
 	public $script_suffix;
 	
-	public $client;
+	public $host;
 	public $ref;
 	
 	public $user;
@@ -94,7 +94,8 @@ class LTPLE_Host {
 	public function __construct ( $file = '', $version = '1.0.0' ) {
 		
 		$this->_version = $version;
-		$this->_token = 'ltple';
+		$this->_token 	= 'ltple';
+		$this->_base 	= 'ltple_';
 		
 		if( isset($_GET['_']) && is_numeric($_GET['_']) ){
 			
@@ -126,19 +127,32 @@ class LTPLE_Host {
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 10, 1 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_styles' ), 10, 1 );
 	
-		$this->request = new LTPLE_Host_Request();
+		$this->host 	= new LTPLE_Host_Host( $this );
+		$this->request  = new LTPLE_Host_Request();
 
-		$this->admin = new LTPLE_Host_Admin_API();
+		$this->admin 	= new LTPLE_Host_Admin_API( $this );
+		
+		$this->domain 	= new LTPLE_Host_Domain( $this );
 		
 		if ( !is_admin() ) {
-			
+
 			// Load API for generic admin functions
 			
-			add_action( 'wp_head', array( $this, 'ltple_host_header') );
-			add_action( 'wp_footer', array( $this, 'ltple_host_footer') );
+			add_action( 'wp_head', array( $this, 'host_header') );
+			add_action( 'wp_footer', array( $this, 'host_footer') );
+			
+			if( WP_SITEURL == $this->host->url ){
+				
+				// get plan
+				
+				$this->plan = new LTPLE_Host_Plan( $this );
+			}
+			else{
+				
+				// output user page
+
+			}
 		}
-		
-		//$this->plan 	= new LTPLE_Host_Plan( $this );
 		
 		// Handle localisation
 		$this->load_plugin_textdomain();
@@ -146,7 +160,7 @@ class LTPLE_Host {
 		
 		//init profiler 
 		
-		add_action( 'init', array( $this, 'ltple_host_init' ));	
+		add_action( 'init', array( $this, 'host_init' ));	
 		
 		//remove admin bar in frontend
 		
@@ -249,7 +263,7 @@ class LTPLE_Host {
 
 		$encrypt_method = "AES-256-CBC";
 		
-		$secret_key = md5( $this->client->key );
+		$secret_key = md5( $this->host->key );
 		
 		$secret_iv = $this->ltple_get_secret_iv();
 		
@@ -271,7 +285,7 @@ class LTPLE_Host {
 
 		$encrypt_method = "AES-256-CBC";
 		
-		$secret_key = md5( $this->client->key );
+		$secret_key = md5( $this->host->key );
 		
 		$secret_iv = $this->ltple_get_secret_iv();
 
@@ -310,7 +324,7 @@ class LTPLE_Host {
 		return base64_decode(strtr($inputStr, '-_,', '+/='));
 	}
 	
-	public function ltple_host_init(){	
+	public function host_init(){	
 
 		//get current user
 		
@@ -336,12 +350,12 @@ class LTPLE_Host {
 		$this->editedUser = $this->user;
 	}
 	
-	public function ltple_host_header(){
+	public function host_header(){
 		
 		//echo '<link rel="stylesheet" href="https://raw.githubusercontent.com/dbtek/bootstrap-vertical-tabs/master/bootstrap.vertical-tabs.css">';	
 	}
 	
-	public function ltple_host_footer(){
+	public function host_footer(){
 		
 		
 	}	

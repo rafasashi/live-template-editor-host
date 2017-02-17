@@ -145,6 +145,23 @@ class LTPLE_Host_Settings {
 			'fields'				=> array(
 				
 				array(
+					'id' 			=> 'host_url',
+					'label'			=> __( 'Host url' , $this->plugin->slug ),
+					'description'	=> '',
+					'type'			=> 'text',
+					'default'		=> '',
+					'placeholder'	=> __( 'http://', $this->plugin->slug ),
+					'disabled'		=> ( ( WP_SITEURL == $this->parent->host->url ) ? true : false),
+				),
+				array(
+					'id' 			=> 'host_key',
+					'label'			=> __( 'Host key' , 'live-template-editor-client' ),
+					'description'	=> '',
+					'type'			=> 'text',
+					'default'		=> '',
+					'placeholder'	=> __( '', 'live-template-editor-client' )
+				),				
+				array(
 					'id' 			=> 'email_support',
 					'label'			=> __( 'Support email' , $this->plugin->slug ),
 					'description'	=> '',
