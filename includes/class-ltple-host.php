@@ -149,8 +149,55 @@ class LTPLE_Host {
 			}
 			else{
 				
-				// output user page
+				// get layer content
+				
+				$url = parse_url(urldecode(urldecode($_SERVER['SCRIPT_URI'])));
+				
+				if( !empty($url['host']) ){
+					
+					$domain = explode('.',$url['host'],2);
+					
+					$domain = ( ( !empty($domain[1]) ) ? $domain[1] : $domain[0]);
 
+					$domain = get_page_by_title($domain, OBJECT, 'domain');
+					
+					if( !empty($domain) ){
+					
+						$domainClientUrl = get_post_meta( $domain->ID, 'domainClientUrl', true);
+					
+						if( !empty($domainClientUrl) ){
+							
+							$resourceUrl = $domainClientUrl . '/?api=layer/show&url='.urlencode($_SERVER['SCRIPT_URI']);
+
+							$ch = curl_init($resourceUrl);
+							
+							curl_setopt($ch, CURLOPT_VERBOSE, 1);
+						
+							// Turn off the server and peer verification (TrustManager Concept).
+							curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+							curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+						
+							curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+							curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+		
+							curl_setopt($ch, CURLOPT_USERAGENT,'Mozilla/5.0 (compatible; Recuweb/1.0; +http://host.recuweb.com/)');
+							
+							$result = curl_exec($ch);
+							
+							$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+							
+							curl_close($ch);				
+
+							if( $httpcode < 400 && !empty($result) ){
+								
+								// output layer content
+
+								echo $result;
+								exit;
+							}
+						}
+					}
+				}
 			}
 		}
 		
@@ -195,55 +242,6 @@ class LTPLE_Host {
 	
 	public function host_template( $template_path ){
 		
-		/*
-		$post = get_post();
-		
-		if($slug = get_post_field( 'post_name', $post )){
-			
-			if( $slug == 'endpoint' ){
-				
-				$template_path = $this->views . $this->_dev . '/endpoint.php';
-			}
-			elseif( $this->request->is_remote === true ){
-				
-				$template_path = $this->views . $this->_dev . '/index.php';
-			}
-			elseif( isset($_GET['pk']) ){
-				
-				$template_path = $this->views . $this->_dev . '/index.php';
-			}
-			else{ 
-				
-				//debug user by id
-				
-				wp_mail($this->settings->options->emailSupport, 'Debug user request id ' . $this->user->ID . ' - ip ' . $this->request->ip, print_r($_SERVER,true));
-				
-				$allowed_ids = [1];
-				
-				if( in_array( $this->user->ID, $allowed_ids ) ){
-
-					$template_path = $this->views . $this->_dev . '/index.php';
-				}
-				elseif( $this->_dev != '' ){
-					
-					echo '<pre>';
-					echo print_r($_SERVER,true);
-					exit;
-				}
-				else{
-					
-					$template_path = $this->views . $this->_dev . '/errors/request.php';				
-				}
-			}
-		}
-		else{
-			
-			// redirect to vendor page
-			
-			wp_redirect( 'http://ltple.recuweb.com' );
-			exit;
-		}
-		*/
 		
 		return $template_path;
 	}
