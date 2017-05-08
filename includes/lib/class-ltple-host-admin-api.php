@@ -138,7 +138,7 @@ class LTPLE_Host_Admin_API {
 			case 'text':
 			case 'url':
 			case 'email':
-				$html .= '<input' . $style . ' class="form-control" id="' . $id . '" type="text" name="' . esc_attr( $option_name ) . '" placeholder="' . esc_attr( $field['placeholder'] ) . '" value="' . esc_attr( $data ) . '" '.$required.$disabled.'/>' . "\n";
+				$html .= '<input' . $style . ' class="form-control" id="' . $id . '" type="text" name="' . esc_attr( $option_name ) . '" placeholder="' . ( !empty($field['placeholder']) ? esc_attr( $field['placeholder'] ) : '' ) . '" value="' . esc_attr( $data ) . '" '.$required.$disabled.'/>' . "\n";
 			break;
 			
 			case 'slug':

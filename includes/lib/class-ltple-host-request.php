@@ -48,5 +48,5 @@ class LTPLE_Host_Request {
 				}
 			}
 		}
-	}	
+	}
 }
