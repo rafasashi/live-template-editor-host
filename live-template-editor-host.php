@@ -24,36 +24,9 @@
 	
 	if ( ! defined( 'ABSPATH' ) ) exit;
 	
-	if(!function_exists('is_dev_env')){
+	$dev_ip = '109.28.69.143';
 		
-		function is_dev_env( $dev_ip = '176.132.10.223' ){
-			
-			if( $_SERVER['REMOTE_ADDR'] == $dev_ip || ( isset($_SERVER['HTTP_X_FORWARDED_FOR']) && $_SERVER['HTTP_X_FORWARDED_FOR'] == $dev_ip ) ){
-				
-				return true;
-			}
-
-			return false;		
-		}
-	}
-	
-	if(!function_exists('ltple_row_meta')){
-	
-		function ltple_row_meta( $links, $file ){
-			
-			if ( strpos( $file, basename( __FILE__ ) ) !== false ) {
-				
-				$new_links = array( '<a href="https://github.com/rafasashi" target="_blank">' . __( 'Documentation', 'cleanlogin' ) . '</a>' );
-				$links = array_merge( $links, $new_links );
-			}
-			
-			return $links;
-		}
-	}
-	
-	add_filter('plugin_row_meta', 'ltple_row_meta', 10, 2);
-	
-	$mode = ( is_dev_env() ? '-dev' : '');
+	$mode = ( ($_SERVER['REMOTE_ADDR'] == $dev_ip || ( isset($_SERVER['HTTP_X_FORWARDED_FOR']) && $_SERVER['HTTP_X_FORWARDED_FOR'] == $dev_ip )) ? '-dev' : '');
 	
 	if( $mode == '-dev' ){
 		
@@ -79,13 +52,13 @@
 	 * @since  1.0.0
 	 * @return object LTPLE_Host
 	 */
-	function LTPLE_Host () {
+	function LTPLE_Host( $version = '1.0.0', $mode = '' ) {
 		
-		$instance = LTPLE_Host::instance( __FILE__, '1.0.0' );
+		$instance = LTPLE_Host::instance( __FILE__, $version );
 
 		if ( is_null( $instance->_dev ) ) {
 			
-			$instance->_dev = ( is_dev_env() ? '-dev' : '');
+			$instance->_dev = $mode;
 		}		
 		
 		if ( is_null( $instance->settings ) ) {
@@ -96,7 +69,7 @@
 		return $instance;
 	}
 	
-	LTPLE_Host()->register_post_type( 'domain', __( 'Domain name', 'live-template-editor-host' ), __( 'Domain name', 'live-template-editor-host' ), '', array(
+	LTPLE_Host( '1.0.0', $mode )->register_post_type( 'domain', __( 'Domain name', 'live-template-editor-host' ), __( 'Domain name', 'live-template-editor-host' ), '', array(
 
 		'public' 				=> false,
 		'publicly_queryable' 	=> false,
